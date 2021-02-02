@@ -1,0 +1,71 @@
+specVersion: 0.0.1
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: Contract
+    network: rinkeby
+    source:
+      address: "0xF267637dF36C5904f56722858c351c62578b0d15"
+      abi: Contract
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.2
+      language: wasm/assemblyscript
+      entities:
+        - LogEmergencyWithdrawa
+        - LogNewCouponCycle
+        - LogOraclePriceAndPeriod
+        - LogRewardClaimed
+        - LogRewardsAccrued
+        - LogSetBlockDuration
+        - LogSetCurveShifter
+        - LogSetEpochs
+        - LogSetInitialRewardShare
+        - LogSetMeanAndDeviationWithFormulaConstants
+        - LogSetMultiSigAddress
+        - LogSetMultiSigRewardShare
+        - LogSetOracle
+        - LogSetOraclePeriod
+        - LogStartNewDistributionCycle
+        - LogTotalRewardClaimed
+        - OwnershipTransferred
+      abis:
+        - name: Contract
+          file: ./abis/Contract.json
+      eventHandlers:
+        - event: LogEmergencyWithdrawa(uint256)
+          handler: handleLogEmergencyWithdrawa
+        - event: LogNewCouponCycle(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)
+          handler: handleLogNewCouponCycle
+        - event: LogOraclePriceAndPeriod(uint256,uint256)
+          handler: handleLogOraclePriceAndPeriod
+        - event: LogRewardClaimed(address,uint256,uint256)
+          handler: handleLogRewardClaimed
+        - event: LogRewardsAccrued(uint256,uint256,bytes16)
+          handler: handleLogRewardsAccrued
+        - event: LogSetBlockDuration(uint256)
+          handler: handleLogSetBlockDuration
+        - event: LogSetCurveShifter(uint256)
+          handler: handleLogSetCurveShifter
+        - event: LogSetEpochs(uint256)
+          handler: handleLogSetEpochs
+        - event: LogSetInitialRewardShare(uint256)
+          handler: handleLogSetInitialRewardShare
+        - event: LogSetMeanAndDeviationWithFormulaConstants(bytes16,bytes16,bytes16,bytes16)
+          handler: handleLogSetMeanAndDeviationWithFormulaConstants
+        - event: LogSetMultiSigAddress(address)
+          handler: handleLogSetMultiSigAddress
+        - event: LogSetMultiSigRewardShare(uint256)
+          handler: handleLogSetMultiSigRewardShare
+        - event: LogSetOracle(address)
+          handler: handleLogSetOracle
+        - event: LogSetOraclePeriod(uint256)
+          handler: handleLogSetOraclePeriod
+        - event: LogStartNewDistributionCycle(uint256,uint256)
+          handler: handleLogStartNewDistributionCycle
+        - event: LogTotalRewardClaimed(uint256)
+          handler: handleLogTotalRewardClaimed
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+      file: ./src/mapping.ts

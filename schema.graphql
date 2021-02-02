@@ -1,0 +1,5 @@
+type ExampleEntity @entity {
+  id: ID!
+  count: BigInt!
+  withdrawAmount_: BigInt! # uint256
+}

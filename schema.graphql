@@ -1,5 +1,34 @@
-type ExampleEntity @entity {
-  id: ID!
-  count: BigInt!
-  withdrawAmount_: BigInt! # uint256
+enum LastRebase {
+	POSITIVE
+	NEUTRAL
+	NEGATIVE
+	NONE
+}
+
+type Setting @entity {
+	id: ID!
+	epochs: BigInt!
+	blockDuration: BigInt!
+	oraclePeriod: BigInt!
+	curveShifter: BigInt!
+	initialRewardShare: BigInt!
+	multiSigRewardShare: BigInt!
+	mean: Bytes!
+	deviation: Bytes!
+	oneDivDeviationSqrtTwoPi: Bytes!
+	twoDeviationSquare: Bytes!
+	peakScaler: Bytes!
+	lastRebase: LastRebase!
+}
+
+type ExpansionCycle @entity {
+	id: ID!
+}
+
+type RewardCycle @entity {
+	id: ID!
+}
+
+type User @entity {
+	id: ID!
 }

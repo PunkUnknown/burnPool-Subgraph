@@ -1,16 +1,17 @@
-specVersion: 0.0.1
+specVersion: 0.0.2
 schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
     name: Contract
-    network: rinkeby
+    network: kovan
     source:
-      address: "0xF267637dF36C5904f56722858c351c62578b0d15"
+      address: "0x46fB374aAcf18217662cC40cD0a1D6F215E28b5F"
       abi: Contract
+      startBlock: 23276600
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.2
+      apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
         - LogEmergencyWithdrawa
@@ -29,7 +30,6 @@ dataSources:
         - LogSetOraclePeriod
         - LogStartNewDistributionCycle
         - LogTotalRewardClaimed
-        - OwnershipTransferred
       abis:
         - name: Contract
           file: ./abis/Contract.json
@@ -66,6 +66,8 @@ dataSources:
           handler: handleLogStartNewDistributionCycle
         - event: LogTotalRewardClaimed(uint256)
           handler: handleLogTotalRewardClaimed
-        - event: OwnershipTransferred(indexed address,indexed address)
-          handler: handleOwnershipTransferred
+      callHandlers:
+        - function: initialize(address,address,address,address,address,uint256,uint256,uint256,uint256,address,uint256,bytes16,bytes16,bytes16,bytes16)
+          handler: handleInitialize
+
       file: ./src/mapping.ts

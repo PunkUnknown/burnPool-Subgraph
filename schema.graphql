@@ -8,8 +8,8 @@ enum LastRebase {
 type Setting @entity {
 	id: ID!
 	epochs: BigInt!
-	blockDuration: BigInt!
-	oraclePeriod: BigInt!
+	rewardBlockPeriod: BigInt!
+	oracleBlockPeriod: BigInt!
 	curveShifter: BigInt!
 	initialRewardShare: BigInt!
 	multiSigRewardShare: BigInt!
@@ -23,10 +23,24 @@ type Setting @entity {
 
 type ExpansionCycle @entity {
 	id: ID!
+	rewardAccrued: BigInt!
+	cycleExpansion: [BigInt!]!
+	curveScale: [Bytes!]!
 }
 
 type RewardCycle @entity {
 	id: ID!
+	rewardAmount: BigInt!
+	debasePerEpoch: BigInt!
+	rewardBlockPeriod: BigInt!
+	oracleBlockPeriod: BigInt!
+	epochsToReward: BigInt!
+	epochsRewarded: BigInt!
+	couponsIssued: BigInt!
+	periodFinish: BigInt!
+	rewardDistributed: BigInt!
+	price: [BigInt!]!
+	priceUpdateBlock: [BigInt!]!
 }
 
 type User @entity {

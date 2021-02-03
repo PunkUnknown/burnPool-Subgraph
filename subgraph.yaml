@@ -6,7 +6,7 @@ dataSources:
     name: Contract
     network: kovan
     source:
-      address: "0x46fB374aAcf18217662cC40cD0a1D6F215E28b5F"
+      address: "0xdA4C167f81D93f80e076566BC8F614c5d81572B5"
       abi: Contract
       startBlock: 23276600
     mapping:
@@ -14,29 +14,24 @@ dataSources:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - LogEmergencyWithdrawa
         - LogNewCouponCycle
         - LogOraclePriceAndPeriod
         - LogRewardClaimed
         - LogRewardsAccrued
-        - LogSetBlockDuration
+        - LogSetRewardBlockPeriod
         - LogSetCurveShifter
         - LogSetEpochs
         - LogSetInitialRewardShare
         - LogSetMeanAndDeviationWithFormulaConstants
-        - LogSetMultiSigAddress
         - LogSetMultiSigRewardShare
-        - LogSetOracle
-        - LogSetOraclePeriod
+        - LogSetOracleBlockPeriod
         - LogStartNewDistributionCycle
         - LogTotalRewardClaimed
       abis:
         - name: Contract
           file: ./abis/Contract.json
       eventHandlers:
-        - event: LogEmergencyWithdrawa(uint256)
-          handler: handleLogEmergencyWithdrawa
-        - event: LogNewCouponCycle(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)
+        - event: LogNewCouponCycle(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)
           handler: handleLogNewCouponCycle
         - event: LogOraclePriceAndPeriod(uint256,uint256)
           handler: handleLogOraclePriceAndPeriod
@@ -44,28 +39,22 @@ dataSources:
           handler: handleLogRewardClaimed
         - event: LogRewardsAccrued(uint256,uint256,bytes16)
           handler: handleLogRewardsAccrued
-        - event: LogSetBlockDuration(uint256)
-          handler: handleLogSetBlockDuration
+        - event: LogSetRewardBlockPeriod(uint256)
+          handler: handleLogSetRewardBlockPeriod
         - event: LogSetCurveShifter(uint256)
           handler: handleLogSetCurveShifter
         - event: LogSetEpochs(uint256)
           handler: handleLogSetEpochs
         - event: LogSetInitialRewardShare(uint256)
           handler: handleLogSetInitialRewardShare
-        - event: LogSetMeanAndDeviationWithFormulaConstants(bytes16,bytes16,bytes16,bytes16)
+        - event: LogSetMeanAndDeviationWithFormulaConstants(bytes16,bytes16,bytes16,bytes16,bytes16)
           handler: handleLogSetMeanAndDeviationWithFormulaConstants
-        - event: LogSetMultiSigAddress(address)
-          handler: handleLogSetMultiSigAddress
         - event: LogSetMultiSigRewardShare(uint256)
           handler: handleLogSetMultiSigRewardShare
-        - event: LogSetOracle(address)
-          handler: handleLogSetOracle
-        - event: LogSetOraclePeriod(uint256)
-          handler: handleLogSetOraclePeriod
-        - event: LogStartNewDistributionCycle(uint256,uint256)
+        - event: LogSetOracleBlockPeriod(uint256)
+          handler: handleLogSetOracleBlockPeriod
+        - event: LogStartNewDistributionCycle(uint256,uint256,uint256)
           handler: handleLogStartNewDistributionCycle
-        - event: LogTotalRewardClaimed(uint256)
-          handler: handleLogTotalRewardClaimed
       callHandlers:
         - function: initialize(address,address,address,address,address,uint256,uint256,uint256,uint256,address,uint256,bytes16,bytes16,bytes16,bytes16)
           handler: handleInitialize

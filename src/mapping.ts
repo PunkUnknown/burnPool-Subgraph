@@ -1,31 +1,27 @@
 import { BigInt } from '@graphprotocol/graph-ts';
 import {
 	Contract,
-	LogEmergencyWithdrawa,
 	LogNewCouponCycle,
 	LogOraclePriceAndPeriod,
 	LogRewardClaimed,
 	LogRewardsAccrued,
-	LogSetBlockDuration,
 	LogSetCurveShifter,
 	LogSetEpochs,
 	LogSetInitialRewardShare,
 	LogSetMeanAndDeviationWithFormulaConstants,
-	LogSetMultiSigAddress,
 	LogSetMultiSigRewardShare,
-	LogSetOracle,
-	LogSetOraclePeriod,
 	LogStartNewDistributionCycle,
-	LogTotalRewardClaimed,
-	InitializeCall
+	InitializeCall,
+	LogSetOracleBlockPeriod,
+	LogSetRewardBlockPeriod
 } from '../generated/Contract/Contract';
-import { Setting } from '../generated/schema';
+import { Setting, RewardCycle, ExpansionCycle } from '../generated/schema';
 
 export function handleInitialize(call: InitializeCall): void {
 	let setting = new Setting('0');
 
 	setting.epochs = call.inputs.epochs_;
-	setting.oraclePeriod = call.inputs.oraclePeriod_;
+	setting.oracleBlockPeriod = call.inputs.oracleBlockPeriod_;
 	setting.curveShifter = call.inputs.curveShifter_;
 	setting.initialRewardShare = call.inputs.initialRewardShare_;
 	setting.multiSigRewardShare = call.inputs.multiSigRewardShare_;
@@ -36,7 +32,7 @@ export function handleInitialize(call: InitializeCall): void {
 
 	let contract = Contract.bind(call.to);
 
-	setting.blockDuration = contract.blockDuration();
+	setting.rewardBlockPeriod = contract.rewardBlockPeriod();
 	setting.peakScaler = contract.peakScaler();
 
 	let rebase = contract.lastRebase();
@@ -54,40 +50,71 @@ export function handleInitialize(call: InitializeCall): void {
 	setting.save();
 }
 
-export function handleLogEmergencyWithdrawa(event: LogEmergencyWithdrawa): void {}
+export function handleLogNewCouponCycle(event: LogNewCouponCycle): void {
+	let cycle = new RewardCycle(event.params.index.toString());
+	cycle.rewardAmount = event.params.rewardAmount;
+	cycle.epochsToReward = event.params.epochsToReward;
+	cycle.epochsRewarded = event.params.epochsRewarded;
+	cycle.couponsIssued = event.params.couponsIssued;
+	cycle.periodFinish = event.params.periodFinish;
+	cycle.rewardDistributed = event.params.rewardDistributed;
+	cycle.save();
+}
 
-export function handleLogNewCouponCycle(event: LogNewCouponCycle): void {}
+export function handleLogOraclePriceAndPeriod(event: LogOraclePriceAndPeriod): void {
+	let contract = Contract.bind(event.address);
+	let id = contract.rewardCyclesLength().minus(BigInt.fromI32(1));
+	let cycle = RewardCycle.load(id.toString());
 
-export function handleLogOraclePriceAndPeriod(event: LogOraclePriceAndPeriod): void {}
+	cycle.price.push(event.params.price_);
+	cycle.priceUpdateBlock.push(event.params.period_);
+	cycle.save();
+}
 
 export function handleLogRewardClaimed(event: LogRewardClaimed): void {}
 
-export function handleLogRewardsAccrued(event: LogRewardsAccrued): void {}
+export function handleLogRewardsAccrued(event: LogRewardsAccrued): void {
+	let expansionCycle: ExpansionCycle;
+	if (event.params.rewardsAccrued_ === event.params.expansionPercentageScaled_) {
+		expansionCycle = new ExpansionCycle(ExpansionCycle.length.toString());
+	} else {
+		let len = ExpansionCycle.length - 1;
+		expansionCycle = ExpansionCycle.load(len.toString());
+	}
+	expansionCycle.rewardAccrued = event.params.rewardsAccrued_;
+	expansionCycle.cycleExpansion.push(event.params.expansionPercentageScaled_);
+	expansionCycle.curveScale.push(event.params.value);
+	expansionCycle.save();
+}
 
-export function handleLogSetBlockDuration(event: LogSetBlockDuration): void {
-	let setting = new Setting('0');
-	setting.blockDuration = event.params.blockDuration_;
+export function handleLogSetRewardBlockPeriod(event: LogSetRewardBlockPeriod): void {
+	let setting = Setting.load('0');
+	setting.rewardBlockPeriod = event.params.rewardBlockPeriod_;
 	setting.save();
 }
 
 export function handleLogSetCurveShifter(event: LogSetCurveShifter): void {
-	let setting = new Setting('0');
+	let setting = Setting.load('0');
 	setting.curveShifter = event.params.curveShifter_;
 	setting.save();
 }
 
 export function handleLogSetEpochs(event: LogSetEpochs): void {
-	let setting = new Setting('0');
+	let setting = Setting.load('0');
 	setting.epochs = event.params.epochs_;
 	setting.save();
 }
 
-export function handleLogSetInitialRewardShare(event: LogSetInitialRewardShare): void {}
+export function handleLogSetInitialRewardShare(event: LogSetInitialRewardShare): void {
+	let setting = Setting.load('0');
+	setting.initialRewardShare = event.params.initialRewardShare_;
+	setting.save();
+}
 
 export function handleLogSetMeanAndDeviationWithFormulaConstants(
 	event: LogSetMeanAndDeviationWithFormulaConstants
 ): void {
-	let setting = new Setting('0');
+	let setting = Setting.load('0');
 	setting.mean = event.params.mean_;
 	setting.deviation = event.params.deviation_;
 	setting.oneDivDeviationSqrtTwoPi = event.params.oneDivDeviationSqrtTwoPi_;
@@ -95,86 +122,16 @@ export function handleLogSetMeanAndDeviationWithFormulaConstants(
 	setting.save();
 }
 
-export function handleLogSetMultiSigAddress(event: LogSetMultiSigAddress): void {}
-
 export function handleLogSetMultiSigRewardShare(event: LogSetMultiSigRewardShare): void {
-	let setting = new Setting('0');
+	let setting = Setting.load('0');
 	setting.multiSigRewardShare = event.params.multiSigRewardShare_;
 	setting.save();
 }
 
-export function handleLogSetOracle(event: LogSetOracle): void {}
-
-export function handleLogSetOraclePeriod(event: LogSetOraclePeriod): void {
-	let setting = new Setting('0');
-	setting.oraclePeriod = event.params.oraclePeriod_;
+export function handleLogSetOracleBlockPeriod(event: LogSetOracleBlockPeriod): void {
+	let setting = Setting.load('0');
+	setting.oracleBlockPeriod = event.params.oracleBlockPeriod_;
 	setting.save();
 }
 
 export function handleLogStartNewDistributionCycle(event: LogStartNewDistributionCycle): void {}
-
-export function handleLogTotalRewardClaimed(event: LogTotalRewardClaimed): void {}
-
-// Entities can be loaded from the store using a string ID; this ID
-// needs to be unique across all entities of the same type
-// let entity = ExampleEntity.load(event.transaction.from.toHex());
-// // Entities only exist after they have been saved to the store;
-// // `null` checks allow to create entities on demand
-// if (entity == null) {
-// 	entity = new ExampleEntity(event.transaction.from.toHex());
-// 	// Entity fields can be set using simple assignments
-// 	entity.count = BigInt.fromI32(0);
-// }
-// // BigInt and BigDecimal math are supported
-// entity.count = entity.count + BigInt.fromI32(1);
-// // Entity fields can be set based on event parameters
-// entity.withdrawAmount_ = event.params.withdrawAmount_;
-// // Entities can be written to the store with `.save()`
-// entity.save();
-// Note: If a handler doesn't require existing field values, it is faster
-// _not_ to load the entity from the store. Instead, create it fresh with
-// `new Entity(...)`, set the fields that should be updated and save the
-// entity back to the store. Fields that were not set or unset remain
-// unchanged, allowing for partial updates to be applied.
-// It is also possible to access smart contracts from mappings. For
-// example, the contract that has emitted the event can be connected to
-// with:
-//
-// let contract = Contract.bind(event.address)
-//
-// The following functions can then be called on this contract to access
-// state variables and other data:
-//
-// - contract.blockDuration(...)
-// - contract.burnPool1(...)
-// - contract.burnPool2(...)
-// - contract.bytes16ToUnit256(...)
-// - contract.checkStabilizerAndGetReward(...)
-// - contract.circBalance(...)
-// - contract.curveShifter(...)
-// - contract.debase(...)
-// - contract.deviation(...)
-// - contract.earned(...)
-// - contract.epochs(...)
-// - contract.getCurveValue(...)
-// - contract.getUserCouponBalance(...)
-// - contract.initialRewardShare(...)
-// - contract.lastRebase(...)
-// - contract.mean(...)
-// - contract.multiSigAddress(...)
-// - contract.multiSigRewardShare(...)
-// - contract.multiSigRewardToClaimShare(...)
-// - contract.oneDivDeviationSqrtTwoPi(...)
-// - contract.oracle(...)
-// - contract.oracleNextUpdate(...)
-// - contract.oraclePeriod(...)
-// - contract.owner(...)
-// - contract.peakScaler(...)
-// - contract.policy(...)
-// - contract.positiveToNeutralRebaseRewardsDisabled(...)
-// - contract.rewardCycles(...)
-// - contract.rewardCyclesLength(...)
-// - contract.rewardsAccrued(...)
-// - contract.totalRewardsDistributed(...)
-// - contract.twoDeviationSquare(...)
-// - contract.uint256ToBytes16(...)

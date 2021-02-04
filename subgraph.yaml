@@ -6,7 +6,7 @@ dataSources:
     name: Contract
     network: kovan
     source:
-      address: "0xdA4C167f81D93f80e076566BC8F614c5d81572B5"
+      address: "0x0bbd17940C7ED19B5E0F7273574a474426020a35"
       abi: Contract
       startBlock: 23276600
     mapping:
@@ -53,7 +53,7 @@ dataSources:
           handler: handleLogSetMultiSigRewardShare
         - event: LogSetOracleBlockPeriod(uint256)
           handler: handleLogSetOracleBlockPeriod
-        - event: LogStartNewDistributionCycle(uint256,uint256,uint256)
+        - event: LogStartNewDistributionCycle(uint256,uint256,uint256,bytes16)
           handler: handleLogStartNewDistributionCycle
       callHandlers:
         - function: initialize(address,address,address,address,address,uint256,uint256,uint256,uint256,address,uint256,bytes16,bytes16,bytes16,bytes16)

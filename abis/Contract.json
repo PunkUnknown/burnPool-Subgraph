@@ -327,6 +327,12 @@
 				"internalType": "uint256",
 				"name": "periodFinish_",
 				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes16",
+				"name": "curveValue_",
+				"type": "bytes16"
 			}
 		],
 		"name": "LogStartNewDistributionCycle",

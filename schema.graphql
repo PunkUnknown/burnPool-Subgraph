@@ -10,37 +10,47 @@ type Setting @entity {
 	epochs: BigInt!
 	rewardBlockPeriod: BigInt!
 	oracleBlockPeriod: BigInt!
-	curveShifter: BigInt!
-	initialRewardShare: BigInt!
-	multiSigRewardShare: BigInt!
-	mean: Bytes!
-	deviation: Bytes!
-	oneDivDeviationSqrtTwoPi: Bytes!
-	twoDeviationSquare: Bytes!
-	peakScaler: Bytes!
+	curveShifter: BigDecimal!
+	initialRewardShare: BigDecimal!
+	multiSigRewardShare: BigDecimal!
 	lastRebase: LastRebase!
+	mean: BigDecimal!
+	deviation: BigDecimal!
+	oneDivDeviationSqrtTwoPi: BigDecimal!
+	twoDeviationSquare: BigDecimal!
+	peakScaler: BigDecimal!
 }
 
 type ExpansionCycle @entity {
 	id: ID!
-	rewardAccrued: BigInt!
-	cycleExpansion: [BigInt!]!
-	curveScale: [Bytes!]!
+	rewardAccrued: BigDecimal!
+	cycleExpansion: [BigDecimal!]!
+	curveValue: [BigDecimal!]!
 }
 
 type RewardCycle @entity {
 	id: ID!
-	rewardAmount: BigInt!
-	debasePerEpoch: BigInt!
+	rewardAmount: BigDecimal!
+	debasePerEpoch: BigDecimal!
 	rewardBlockPeriod: BigInt!
 	oracleBlockPeriod: BigInt!
 	epochsToReward: BigInt!
 	epochsRewarded: BigInt!
-	couponsIssued: BigInt!
+	couponsIssued: BigDecimal!
 	periodFinish: BigInt!
-	rewardDistributed: BigInt!
-	price: [BigInt!]!
+	rewardDistributed: BigDecimal!
+	price: [BigDecimal!]!
 	priceUpdateBlock: [BigInt!]!
+	distributions: [DistributionCycle!]! @derivedFrom(field: "rewardCycle")
+}
+
+type DistributionCycle @entity {
+	id: ID!
+	rewardCycle: RewardCycle!
+	poolTotalShare: BigDecimal!
+	rewardRate: BigDecimal!
+	periodFinish: BigInt!
+	curveValue: BigDecimal!
 }
 
 type User @entity {

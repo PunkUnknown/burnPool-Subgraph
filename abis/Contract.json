@@ -4,6 +4,25 @@
 		"inputs": [
 			{
 				"indexed": false,
+				"internalType": "address",
+				"name": "buyer_",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount_",
+				"type": "uint256"
+			}
+		],
+		"name": "LogCouponsBought",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
 				"internalType": "uint256",
 				"name": "withdrawAmount_",
 				"type": "uint256"
@@ -18,79 +37,49 @@
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "index",
+				"name": "index_",
 				"type": "uint256"
 			},
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "rewardAmount",
+				"name": "rewardAmount_",
 				"type": "uint256"
 			},
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "debasePerEpoch",
+				"name": "debasePerEpoch_",
 				"type": "uint256"
 			},
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "rewardBlockPeriod",
+				"name": "rewardBlockPeriod_",
 				"type": "uint256"
 			},
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "oracleBlockPeriod",
+				"name": "oracleBlockPeriod_",
 				"type": "uint256"
 			},
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "epochsToReward",
+				"name": "oracleLastPrice_",
 				"type": "uint256"
 			},
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "epochsRewarded",
+				"name": "oracleNextUpdate_",
 				"type": "uint256"
 			},
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "couponsIssued",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "rewardRate",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "periodFinish",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "lastUpdateTime",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "rewardPerTokenStored",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "rewardDistributed",
+				"name": "epochsToReward_",
 				"type": "uint256"
 			}
 		],
@@ -122,13 +111,13 @@
 			{
 				"indexed": false,
 				"internalType": "address",
-				"name": "user",
+				"name": "user_",
 				"type": "address"
 			},
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "cycleIndex",
+				"name": "cycleIndex_",
 				"type": "uint256"
 			},
 			{
@@ -147,6 +136,12 @@
 			{
 				"indexed": false,
 				"internalType": "uint256",
+				"name": "exchangeRate_",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
 				"name": "rewardsAccrued_",
 				"type": "uint256"
 			},
@@ -159,7 +154,7 @@
 			{
 				"indexed": false,
 				"internalType": "bytes16",
-				"name": "value",
+				"name": "value_",
 				"type": "bytes16"
 			}
 		],
@@ -310,6 +305,12 @@
 	{
 		"anonymous": false,
 		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "exchangeRate_",
+				"type": "uint256"
+			},
 			{
 				"indexed": false,
 				"internalType": "uint256",
@@ -820,19 +821,6 @@
 	},
 	{
 		"inputs": [],
-		"name": "oracleNextUpdate",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
 		"name": "owner",
 		"outputs": [
 			{
@@ -931,6 +919,16 @@
 			{
 				"internalType": "uint256",
 				"name": "oracleBlockPeriod",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "oracleLastPrice",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "oracleNextUpdate",
 				"type": "uint256"
 			},
 			{

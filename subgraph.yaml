@@ -6,7 +6,7 @@ dataSources:
     name: Contract
     network: kovan
     source:
-      address: "0x0bbd17940C7ED19B5E0F7273574a474426020a35"
+      address: "0x310b5170C3BA89BC51D66c1B164231051Ca8aadc"
       abi: Contract
       startBlock: 23276600
     mapping:
@@ -27,17 +27,18 @@ dataSources:
         - LogSetOracleBlockPeriod
         - LogStartNewDistributionCycle
         - LogTotalRewardClaimed
+        - LogCouponsBought
       abis:
         - name: Contract
           file: ./abis/Contract.json
       eventHandlers:
-        - event: LogNewCouponCycle(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)
+        - event: LogNewCouponCycle(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)
           handler: handleLogNewCouponCycle
         - event: LogOraclePriceAndPeriod(uint256,uint256)
           handler: handleLogOraclePriceAndPeriod
         - event: LogRewardClaimed(address,uint256,uint256)
           handler: handleLogRewardClaimed
-        - event: LogRewardsAccrued(uint256,uint256,bytes16)
+        - event: LogRewardsAccrued(uint256,uint256,uint256,bytes16)
           handler: handleLogRewardsAccrued
         - event: LogSetRewardBlockPeriod(uint256)
           handler: handleLogSetRewardBlockPeriod
@@ -53,8 +54,10 @@ dataSources:
           handler: handleLogSetMultiSigRewardShare
         - event: LogSetOracleBlockPeriod(uint256)
           handler: handleLogSetOracleBlockPeriod
-        - event: LogStartNewDistributionCycle(uint256,uint256,uint256,bytes16)
+        - event: LogStartNewDistributionCycle(uint256,uint256,uint256,uint256,bytes16)
           handler: handleLogStartNewDistributionCycle
+        - event: LogCouponsBought(address,uint256)
+          handler: handleLogCouponBought
       callHandlers:
         - function: initialize(address,address,address,address,address,uint256,uint256,uint256,uint256,address,uint256,bytes16,bytes16,bytes16,bytes16)
           handler: handleInitialize

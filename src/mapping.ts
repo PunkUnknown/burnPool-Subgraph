@@ -19,6 +19,8 @@ import { Setting, RewardCycle, ExpansionCycle, DistributionCycle } from '../gene
 
 let DIVIDER_9_INT = BigInt.fromI32(1000000000);
 let DIVIDER_9_DECIMAL = BigDecimal.fromString('1000000000');
+let ZERO = BigInt.fromI32(0);
+let ZERO_DECIMAL = BigDecimal.fromString('0');
 
 let DIVIDER_18_DECIMAL = BigDecimal.fromString('1000000000000000000');
 
@@ -63,16 +65,28 @@ export function handleInitialize(call: InitializeCall): void {
 }
 
 export function handleLogNewCouponCycle(event: LogNewCouponCycle): void {
-	let cycle = new RewardCycle(event.params.index.toString());
-	cycle.rewardAmount = event.params.rewardAmount.divDecimal(DIVIDER_18_DECIMAL);
-	cycle.debasePerEpoch = event.params.debasePerEpoch.divDecimal(DIVIDER_18_DECIMAL);
-	cycle.rewardBlockPeriod = event.params.rewardBlockPeriod;
-	cycle.oracleBlockPeriod = event.params.oracleBlockPeriod;
-	cycle.epochsToReward = event.params.epochsToReward;
-	cycle.epochsRewarded = event.params.epochsRewarded;
-	cycle.couponsIssued = event.params.couponsIssued.divDecimal(DIVIDER_18_DECIMAL);
-	cycle.periodFinish = event.params.periodFinish;
-	cycle.rewardDistributed = event.params.rewardDistributed.divDecimal(DIVIDER_18_DECIMAL);
+	let cycle = new RewardCycle(event.params.index_.toString());
+	cycle.rewardShare = event.params.rewardAmount_.divDecimal(DIVIDER_18_DECIMAL);
+	cycle.debasePerEpoch = event.params.debasePerEpoch_.divDecimal(DIVIDER_18_DECIMAL);
+	cycle.rewardBlockPeriod = event.params.rewardBlockPeriod_;
+	cycle.oracleBlockPeriod = event.params.oracleBlockPeriod_;
+	cycle.epochsToReward = event.params.epochsToReward_;
+	cycle.epochsRewarded = ZERO;
+	cycle.couponsIssued = ZERO_DECIMAL;
+	cycle.rewardDistributed = ZERO_DECIMAL;
+
+	cycle.oracleLastPrices = [];
+	cycle.oracleNextUpdates = [];
+
+	let copy = cycle.oracleLastPrices;
+	let copy2 = cycle.oracleNextUpdates;
+
+	copy.push(event.params.oracleLastPrice_.divDecimal(DIVIDER_18_DECIMAL));
+	copy2.push(event.params.oracleNextUpdate_);
+
+	cycle.oracleLastPrices = copy;
+	cycle.oracleNextUpdates = copy2;
+
 	cycle.save();
 }
 
@@ -81,14 +95,14 @@ export function handleLogOraclePriceAndPeriod(event: LogOraclePriceAndPeriod): v
 	let id = contract.rewardCyclesLength().minus(BigInt.fromI32(1));
 	let cycle = RewardCycle.load(id.toString());
 
-	let price = cycle.price;
-	let priceUpdateBlock = cycle.priceUpdateBlock;
+	let oracleLastPrice = cycle.oracleLastPrices;
+	let oracleNextUpdate = cycle.oracleNextUpdates;
 
-	price.push(event.params.price_.divDecimal(DIVIDER_18_DECIMAL));
-	priceUpdateBlock.push(event.params.period_);
+	oracleLastPrice.push(event.params.price_.divDecimal(DIVIDER_18_DECIMAL));
+	oracleNextUpdate.push(event.params.period_);
 
-	cycle.price = price;
-	cycle.priceUpdateBlock = priceUpdateBlock;
+	cycle.oracleLastPrices = oracleLastPrice;
+	cycle.oracleNextUpdates = oracleNextUpdate;
 
 	cycle.save();
 }
@@ -101,13 +115,16 @@ export function handleLogRewardsAccrued(event: LogRewardsAccrued): void {
 
 	if (event.params.rewardsAccrued_ === event.params.expansionPercentageScaled_) {
 		let expansionCycle = new ExpansionCycle(id.toString());
+
+		expansionCycle.exchangeRate = event.params.exchangeRate_.divDecimal(DIVIDER_18_DECIMAL);
+
 		expansionCycle.rewardAccrued = event.params.rewardsAccrued_.divDecimal(DIVIDER_18_DECIMAL);
 
 		let cycleExpansion = expansionCycle.cycleExpansion;
 		let curveValue = expansionCycle.curveValue;
 
 		cycleExpansion.push(event.params.expansionPercentageScaled_.divDecimal(DIVIDER_18_DECIMAL));
-		curveValue.push(contract.bytes16ToUnit256(event.params.value, DIVIDER_9_INT).divDecimal(DIVIDER_9_DECIMAL));
+		curveValue.push(contract.bytes16ToUnit256(event.params.value_, DIVIDER_9_INT).divDecimal(DIVIDER_9_DECIMAL));
 
 		expansionCycle.cycleExpansion = cycleExpansion;
 		expansionCycle.curveValue = curveValue;
@@ -115,13 +132,16 @@ export function handleLogRewardsAccrued(event: LogRewardsAccrued): void {
 		expansionCycle.save();
 	} else {
 		let expansionCycle = ExpansionCycle.load(id.toString());
+
+		expansionCycle.exchangeRate = event.params.exchangeRate_.divDecimal(DIVIDER_18_DECIMAL);
+
 		expansionCycle.rewardAccrued = event.params.rewardsAccrued_.divDecimal(DIVIDER_18_DECIMAL);
 
 		let cycleExpansion = expansionCycle.cycleExpansion;
 		let curveValue = expansionCycle.curveValue;
 
 		cycleExpansion.push(event.params.expansionPercentageScaled_.divDecimal(DIVIDER_18_DECIMAL));
-		curveValue.push(contract.bytes16ToUnit256(event.params.value, DIVIDER_9_INT).divDecimal(DIVIDER_9_DECIMAL));
+		curveValue.push(contract.bytes16ToUnit256(event.params.value_, DIVIDER_9_INT).divDecimal(DIVIDER_9_DECIMAL));
 
 		expansionCycle.cycleExpansion = cycleExpansion;
 		expansionCycle.curveValue = curveValue;

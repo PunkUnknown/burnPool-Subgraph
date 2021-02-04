@@ -23,6 +23,7 @@ type Setting @entity {
 
 type ExpansionCycle @entity {
 	id: ID!
+	exchangeRate: BigDecimal!
 	rewardAccrued: BigDecimal!
 	cycleExpansion: [BigDecimal!]!
 	curveValue: [BigDecimal!]!
@@ -30,23 +31,24 @@ type ExpansionCycle @entity {
 
 type RewardCycle @entity {
 	id: ID!
-	rewardAmount: BigDecimal!
+	rewardShare: BigDecimal!
 	debasePerEpoch: BigDecimal!
 	rewardBlockPeriod: BigInt!
 	oracleBlockPeriod: BigInt!
+	oracleLastPrices: [BigDecimal!]
+	oracleNextUpdates: [BigInt!]
 	epochsToReward: BigInt!
 	epochsRewarded: BigInt!
 	couponsIssued: BigDecimal!
-	periodFinish: BigInt!
 	rewardDistributed: BigDecimal!
-	price: [BigDecimal!]!
-	priceUpdateBlock: [BigInt!]!
-	distributions: [DistributionCycle!]! @derivedFrom(field: "rewardCycle")
+	distributions: [DistributionCycle!] @derivedFrom(field: "rewardCycle")
+	users: [User!] @derivedFrom(field: "cycle")
 }
 
 type DistributionCycle @entity {
 	id: ID!
 	rewardCycle: RewardCycle!
+	exchangeRate: BigDecimal!
 	poolTotalShare: BigDecimal!
 	rewardRate: BigDecimal!
 	periodFinish: BigInt!
@@ -55,4 +57,6 @@ type DistributionCycle @entity {
 
 type User @entity {
 	id: ID!
+	cycle: RewardCycle!
+	couponBalance: BigDecimal!
 }

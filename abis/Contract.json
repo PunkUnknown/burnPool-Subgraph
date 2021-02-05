@@ -36,6 +36,19 @@
 		"inputs": [
 			{
 				"indexed": false,
+				"internalType": "bool",
+				"name": "rewardDistributionDisabled_",
+				"type": "bool"
+			}
+		],
+		"name": "LogNeutralRebase",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
 				"internalType": "uint256",
 				"name": "index_",
 				"type": "uint256"
@@ -133,6 +146,12 @@
 	{
 		"anonymous": false,
 		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "index",
+				"type": "uint256"
+			},
 			{
 				"indexed": false,
 				"internalType": "uint256",

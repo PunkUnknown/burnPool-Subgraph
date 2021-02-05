@@ -21,14 +21,6 @@ type Setting @entity {
 	peakScaler: BigDecimal!
 }
 
-type ExpansionCycle @entity {
-	id: ID!
-	exchangeRate: BigDecimal!
-	rewardAccrued: BigDecimal!
-	cycleExpansion: [BigDecimal!]!
-	curveValue: [BigDecimal!]!
-}
-
 type RewardCycle @entity {
 	id: ID!
 	rewardShare: BigDecimal!
@@ -40,9 +32,18 @@ type RewardCycle @entity {
 	epochsToReward: BigInt!
 	epochsRewarded: BigInt!
 	couponsIssued: BigDecimal!
+	rewardDistributionDisabled: Boolean!
 	rewardDistributed: BigDecimal!
 	distributions: [DistributionCycle!] @derivedFrom(field: "rewardCycle")
-	users: [User!] @derivedFrom(field: "cycle")
+	users: [User!] @derivedFrom(field: "rewardCycle")
+}
+
+type ExpansionCycle @entity {
+	id: ID!
+	rewardAccrued: BigDecimal
+	exchangeRate: [BigDecimal!]
+	cycleExpansion: [BigDecimal!]
+	curveValue: [BigDecimal!]
 }
 
 type DistributionCycle @entity {
@@ -57,6 +58,7 @@ type DistributionCycle @entity {
 
 type User @entity {
 	id: ID!
-	cycle: RewardCycle!
+	address: String!
+	rewardCycle: RewardCycle!
 	couponBalance: BigDecimal!
 }

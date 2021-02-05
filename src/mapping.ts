@@ -13,9 +13,11 @@ import {
 	LogStartNewDistributionCycle,
 	InitializeCall,
 	LogSetOracleBlockPeriod,
-	LogSetRewardBlockPeriod
+	LogSetRewardBlockPeriod,
+	LogCouponsBought,
+	LogNeutralRebase
 } from '../generated/Contract/Contract';
-import { Setting, RewardCycle, ExpansionCycle, DistributionCycle } from '../generated/schema';
+import { Setting, RewardCycle, ExpansionCycle, DistributionCycle, User } from '../generated/schema';
 
 let DIVIDER_9_INT = BigInt.fromI32(1000000000);
 let DIVIDER_9_DECIMAL = BigDecimal.fromString('1000000000');
@@ -64,6 +66,30 @@ export function handleInitialize(call: InitializeCall): void {
 	setting.save();
 }
 
+export function handleLogCouponBought(event: LogCouponsBought): void {
+	let contract = Contract.bind(event.address);
+	let id = contract.rewardCyclesLength().minus(BigInt.fromI32(1)).toString();
+	let cycle = RewardCycle.load(id);
+	let userId = event.params.buyer_.toHexString().concat('-').concat(id);
+
+	let user = User.load(userId);
+	if (user == null) {
+		user = new User(userId);
+		user.address = event.params.buyer_.toHexString();
+		user.rewardCycle = id;
+		user.couponBalance = event.params.amount_.divDecimal(DIVIDER_18_DECIMAL);
+		user.save();
+
+		let users = cycle.users;
+		users.push(userId);
+		cycle.users = users;
+		cycle.save();
+	} else {
+		user.couponBalance = user.couponBalance.plus(event.params.amount_.divDecimal(DIVIDER_18_DECIMAL));
+		user.save();
+	}
+}
+
 export function handleLogNewCouponCycle(event: LogNewCouponCycle): void {
 	let cycle = new RewardCycle(event.params.index_.toString());
 	cycle.rewardShare = event.params.rewardAmount_.divDecimal(DIVIDER_18_DECIMAL);
@@ -74,6 +100,7 @@ export function handleLogNewCouponCycle(event: LogNewCouponCycle): void {
 	cycle.epochsRewarded = ZERO;
 	cycle.couponsIssued = ZERO_DECIMAL;
 	cycle.rewardDistributed = ZERO_DECIMAL;
+	cycle.rewardDistributionDisabled = false;
 
 	cycle.oracleLastPrices = [];
 	cycle.oracleNextUpdates = [];
@@ -110,44 +137,49 @@ export function handleLogOraclePriceAndPeriod(event: LogOraclePriceAndPeriod): v
 export function handleLogRewardClaimed(event: LogRewardClaimed): void {}
 
 export function handleLogRewardsAccrued(event: LogRewardsAccrued): void {
-	let contract = Contract.bind(event.address);
-	let id = contract.rewardCyclesLength();
+	let expansionCycle = ExpansionCycle.load(event.params.index.toString());
+	if (expansionCycle == null) {
+		expansionCycle = new ExpansionCycle(event.params.index.toString());
 
-	if (event.params.rewardsAccrued_ === event.params.expansionPercentageScaled_) {
-		let expansionCycle = new ExpansionCycle(id.toString());
-
-		expansionCycle.exchangeRate = event.params.exchangeRate_.divDecimal(DIVIDER_18_DECIMAL);
-
-		expansionCycle.rewardAccrued = event.params.rewardsAccrued_.divDecimal(DIVIDER_18_DECIMAL);
-
-		let cycleExpansion = expansionCycle.cycleExpansion;
-		let curveValue = expansionCycle.curveValue;
-
-		cycleExpansion.push(event.params.expansionPercentageScaled_.divDecimal(DIVIDER_18_DECIMAL));
-		curveValue.push(contract.bytes16ToUnit256(event.params.value_, DIVIDER_9_INT).divDecimal(DIVIDER_9_DECIMAL));
-
-		expansionCycle.cycleExpansion = cycleExpansion;
-		expansionCycle.curveValue = curveValue;
-
-		expansionCycle.save();
-	} else {
-		let expansionCycle = ExpansionCycle.load(id.toString());
-
-		expansionCycle.exchangeRate = event.params.exchangeRate_.divDecimal(DIVIDER_18_DECIMAL);
-
-		expansionCycle.rewardAccrued = event.params.rewardsAccrued_.divDecimal(DIVIDER_18_DECIMAL);
-
-		let cycleExpansion = expansionCycle.cycleExpansion;
-		let curveValue = expansionCycle.curveValue;
-
-		cycleExpansion.push(event.params.expansionPercentageScaled_.divDecimal(DIVIDER_18_DECIMAL));
-		curveValue.push(contract.bytes16ToUnit256(event.params.value_, DIVIDER_9_INT).divDecimal(DIVIDER_9_DECIMAL));
-
-		expansionCycle.cycleExpansion = cycleExpansion;
-		expansionCycle.curveValue = curveValue;
-
-		expansionCycle.save();
+		expansionCycle.exchangeRate = [];
+		expansionCycle.cycleExpansion = [];
+		expansionCycle.curveValue = [];
 	}
+
+	expansionCycle.rewardAccrued = event.params.rewardsAccrued_.divDecimal(DIVIDER_18_DECIMAL);
+
+	let exchangeRate = expansionCycle.exchangeRate;
+	let cycleExpansion = expansionCycle.cycleExpansion;
+	let curveValue = expansionCycle.curveValue;
+
+	exchangeRate.push(event.params.exchangeRate_.divDecimal(DIVIDER_18_DECIMAL));
+	cycleExpansion.push(event.params.expansionPercentageScaled_.divDecimal(DIVIDER_18_DECIMAL));
+
+	let contract = Contract.bind(event.address);
+
+	curveValue.push(contract.bytes16ToUnit256(event.params.value_, DIVIDER_9_INT).divDecimal(DIVIDER_9_DECIMAL));
+
+	expansionCycle.exchangeRate = exchangeRate;
+	expansionCycle.cycleExpansion = cycleExpansion;
+	expansionCycle.curveValue = curveValue;
+
+	expansionCycle.save();
+}
+
+export function handleNeutralRebase(event: LogNeutralRebase): void {
+	let setting = Setting.load('0');
+
+	let contract = Contract.bind(event.address);
+	let id = contract.rewardCyclesLength().minus(BigInt.fromI32(1));
+	let cycle = RewardCycle.load(id.toString());
+
+	if (cycle != null) {
+		cycle.rewardDistributionDisabled = event.params.rewardDistributionDisabled_;
+		cycle.save();
+	}
+
+	setting.lastRebase = 'NEUTRAL';
+	setting.save();
 }
 
 export function handleLogSetRewardBlockPeriod(event: LogSetRewardBlockPeriod): void {
@@ -181,16 +213,21 @@ export function handleLogSetMeanAndDeviationWithFormulaConstants(
 	let contract = Contract.bind(event.address);
 
 	setting.mean = contract.bytes16ToUnit256(event.params.mean_, DIVIDER_9_INT).divDecimal(DIVIDER_9_DECIMAL);
+
 	setting.deviation = contract.bytes16ToUnit256(event.params.deviation_, DIVIDER_9_INT).divDecimal(DIVIDER_9_DECIMAL);
+
 	setting.peakScaler = contract
 		.bytes16ToUnit256(event.params.peakScaler_, DIVIDER_9_INT)
 		.divDecimal(DIVIDER_9_DECIMAL);
+
 	setting.oneDivDeviationSqrtTwoPi = contract
 		.bytes16ToUnit256(event.params.oneDivDeviationSqrtTwoPi_, DIVIDER_9_INT)
 		.divDecimal(DIVIDER_9_DECIMAL);
+
 	setting.twoDeviationSquare = contract
 		.bytes16ToUnit256(event.params.twoDeviationSquare_, DIVIDER_9_INT)
 		.divDecimal(DIVIDER_9_DECIMAL);
+
 	setting.save();
 }
 
@@ -212,10 +249,17 @@ export function handleLogStartNewDistributionCycle(event: LogStartNewDistributio
 	let id = contract.rewardCyclesLength().minus(BigInt.fromI32(1));
 
 	let distributionCycle = new DistributionCycle(distributionId);
+
 	distributionCycle.rewardCycle = id.toString();
+
 	distributionCycle.poolTotalShare = event.params.poolShareAdded_.divDecimal(DIVIDER_18_DECIMAL);
+
 	distributionCycle.rewardRate = event.params.rewardRate_.divDecimal(DIVIDER_18_DECIMAL);
+
 	distributionCycle.periodFinish = event.params.periodFinish_;
+
+	distributionCycle.exchangeRate = event.params.exchangeRate_.divDecimal(DIVIDER_18_DECIMAL)
+
 	distributionCycle.curveValue = contract
 		.bytes16ToUnit256(event.params.curveValue_, DIVIDER_9_INT)
 		.divDecimal(DIVIDER_9_DECIMAL);
@@ -223,8 +267,11 @@ export function handleLogStartNewDistributionCycle(event: LogStartNewDistributio
 	distributionCycle.save();
 
 	let rewardCycle = RewardCycle.load(id.toString());
+
 	let distributions = rewardCycle.distributions;
+
 	distributions.push(distributionId);
+
 	rewardCycle.distributions = distributions;
 
 	rewardCycle.save();

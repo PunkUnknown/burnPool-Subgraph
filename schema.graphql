@@ -19,6 +19,7 @@ type Setting @entity {
 	oneDivDeviationSqrtTwoPi: BigDecimal!
 	twoDeviationSquare: BigDecimal!
 	peakScaler: BigDecimal!
+	rewardCycleLength: BigInt!
 }
 
 type RewardCycle @entity {
@@ -33,7 +34,6 @@ type RewardCycle @entity {
 	epochsRewarded: BigInt!
 	couponsIssued: BigDecimal!
 	rewardDistributionDisabled: Boolean!
-	rewardDistributed: BigDecimal!
 	distributions: [DistributionCycle!] @derivedFrom(field: "rewardCycle")
 	users: [User!] @derivedFrom(field: "rewardCycle")
 }
@@ -44,16 +44,24 @@ type ExpansionCycle @entity {
 	exchangeRate: [BigDecimal!]
 	cycleExpansion: [BigDecimal!]
 	curveValue: [BigDecimal!]
+	mean: [BigDecimal!]
+	deviation: [BigDecimal!]
+	peakScaler: [BigDecimal!]
 }
 
 type DistributionCycle @entity {
 	id: ID!
+	blockNumber: BigInt!
 	rewardCycle: RewardCycle!
 	exchangeRate: BigDecimal!
 	poolTotalShare: BigDecimal!
 	rewardRate: BigDecimal!
 	periodFinish: BigInt!
 	curveValue: BigDecimal!
+	rewardDistributed: BigDecimal!
+	mean: BigDecimal!
+	deviation: BigDecimal!
+	peakScaler: BigDecimal!
 }
 
 type User @entity {

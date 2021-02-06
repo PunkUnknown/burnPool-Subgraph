@@ -41,6 +41,8 @@ export function handleInitialize(call: InitializeCall): void {
 
 	setting.deviation = contract.bytes16ToUnit256(call.inputs.deviation_, DIVIDER_9_INT).divDecimal(DIVIDER_9_DECIMAL);
 
+	setting.rewardCycleLength = ZERO;
+
 	setting.oneDivDeviationSqrtTwoPi = contract
 		.bytes16ToUnit256(call.inputs.oneDivDeviationSqrtTwoPi_, DIVIDER_9_INT)
 		.divDecimal(DIVIDER_9_DECIMAL);
@@ -83,11 +85,12 @@ export function handleLogCouponBought(event: LogCouponsBought): void {
 		let users = cycle.users;
 		users.push(userId);
 		cycle.users = users;
-		cycle.save();
 	} else {
 		user.couponBalance = user.couponBalance.plus(event.params.amount_.divDecimal(DIVIDER_18_DECIMAL));
 		user.save();
 	}
+	cycle.couponsIssued = cycle.couponsIssued.plus(event.params.amount_.divDecimal(DIVIDER_18_DECIMAL));
+	cycle.save();
 }
 
 export function handleLogNewCouponCycle(event: LogNewCouponCycle): void {
@@ -99,7 +102,6 @@ export function handleLogNewCouponCycle(event: LogNewCouponCycle): void {
 	cycle.epochsToReward = event.params.epochsToReward_;
 	cycle.epochsRewarded = ZERO;
 	cycle.couponsIssued = ZERO_DECIMAL;
-	cycle.rewardDistributed = ZERO_DECIMAL;
 	cycle.rewardDistributionDisabled = false;
 
 	cycle.oracleLastPrices = [];
@@ -114,6 +116,10 @@ export function handleLogNewCouponCycle(event: LogNewCouponCycle): void {
 	cycle.oracleLastPrices = copy;
 	cycle.oracleNextUpdates = copy2;
 
+	let setting = Setting.load('0');
+	setting.rewardCycleLength = event.params.index_.plus(BigInt.fromI32(1));
+
+	setting.save();
 	cycle.save();
 }
 
@@ -144,6 +150,9 @@ export function handleLogRewardsAccrued(event: LogRewardsAccrued): void {
 		expansionCycle.exchangeRate = [];
 		expansionCycle.cycleExpansion = [];
 		expansionCycle.curveValue = [];
+		expansionCycle.mean = [];
+		expansionCycle.deviation = [];
+		expansionCycle.peakScaler = [];
 	}
 
 	expansionCycle.rewardAccrued = event.params.rewardsAccrued_.divDecimal(DIVIDER_18_DECIMAL);
@@ -151,17 +160,28 @@ export function handleLogRewardsAccrued(event: LogRewardsAccrued): void {
 	let exchangeRate = expansionCycle.exchangeRate;
 	let cycleExpansion = expansionCycle.cycleExpansion;
 	let curveValue = expansionCycle.curveValue;
+	let mean = expansionCycle.mean;
+	let deviation = expansionCycle.deviation;
+	let peakScaler = expansionCycle.peakScaler;
 
 	exchangeRate.push(event.params.exchangeRate_.divDecimal(DIVIDER_18_DECIMAL));
 	cycleExpansion.push(event.params.expansionPercentageScaled_.divDecimal(DIVIDER_18_DECIMAL));
 
 	let contract = Contract.bind(event.address);
+	let setting = Setting.load('0');
 
 	curveValue.push(contract.bytes16ToUnit256(event.params.value_, DIVIDER_9_INT).divDecimal(DIVIDER_9_DECIMAL));
+
+	mean.push(setting.mean);
+	deviation.push(setting.deviation);
+	peakScaler.push(setting.peakScaler);
 
 	expansionCycle.exchangeRate = exchangeRate;
 	expansionCycle.cycleExpansion = cycleExpansion;
 	expansionCycle.curveValue = curveValue;
+	expansionCycle.mean = mean;
+	expansionCycle.deviation = deviation;
+	expansionCycle.peakScaler = peakScaler;
 
 	expansionCycle.save();
 }
@@ -248,6 +268,8 @@ export function handleLogStartNewDistributionCycle(event: LogStartNewDistributio
 	let distributionId = event.block.hash.toHex();
 	let id = contract.rewardCyclesLength().minus(BigInt.fromI32(1));
 
+	let setting = Setting.load('0');
+
 	let distributionCycle = new DistributionCycle(distributionId);
 
 	distributionCycle.rewardCycle = id.toString();
@@ -258,7 +280,14 @@ export function handleLogStartNewDistributionCycle(event: LogStartNewDistributio
 
 	distributionCycle.periodFinish = event.params.periodFinish_;
 
-	distributionCycle.exchangeRate = event.params.exchangeRate_.divDecimal(DIVIDER_18_DECIMAL)
+	distributionCycle.exchangeRate = event.params.exchangeRate_.divDecimal(DIVIDER_18_DECIMAL);
+
+	distributionCycle.rewardDistributed = ZERO_DECIMAL;
+
+	distributionCycle.mean = setting.mean;
+	distributionCycle.deviation = setting.deviation;
+	distributionCycle.peakScaler = setting.peakScaler;
+	distributionCycle.blockNumber = event.block.number;
 
 	distributionCycle.curveValue = contract
 		.bytes16ToUnit256(event.params.curveValue_, DIVIDER_9_INT)
@@ -273,6 +302,8 @@ export function handleLogStartNewDistributionCycle(event: LogStartNewDistributio
 	distributions.push(distributionId);
 
 	rewardCycle.distributions = distributions;
+
+	rewardCycle.epochsRewarded = rewardCycle.epochsRewarded.plus(BigInt.fromI32(1));
 
 	rewardCycle.save();
 }

@@ -5,6 +5,14 @@ enum LastRebase {
 	NONE
 }
 
+enum DistributionStatus {
+	EPOCHS_COMPLETED
+	IN_PROGRESS
+	WAITING_FOR_POSITIVE_REBASE
+	ENDED_DUE_TO_NEUTRAL_REBASE
+	ENDED_DUE_TO_NEGATIVE_REBASE
+}
+
 type Setting @entity {
 	id: ID!
 	epochs: BigInt!
@@ -33,7 +41,8 @@ type RewardCycle @entity {
 	epochsToReward: BigInt!
 	epochsRewarded: BigInt!
 	couponsIssued: BigDecimal!
-	rewardDistributionDisabled: Boolean!
+	distributionStatus: DistributionStatus!
+	rewardDistributed: BigDecimal!
 	distributions: [DistributionCycle!] @derivedFrom(field: "rewardCycle")
 	users: [User!] @derivedFrom(field: "rewardCycle")
 }
@@ -58,7 +67,6 @@ type DistributionCycle @entity {
 	rewardRate: BigDecimal!
 	periodFinish: BigInt!
 	curveValue: BigDecimal!
-	rewardDistributed: BigDecimal!
 	mean: BigDecimal!
 	deviation: BigDecimal!
 	peakScaler: BigDecimal!

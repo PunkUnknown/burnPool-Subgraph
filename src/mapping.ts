@@ -102,7 +102,16 @@ export function handleLogNewCouponCycle(event: LogNewCouponCycle): void {
 	cycle.epochsToReward = event.params.epochsToReward_;
 	cycle.epochsRewarded = ZERO;
 	cycle.couponsIssued = ZERO_DECIMAL;
-	cycle.rewardDistributionDisabled = false;
+	cycle.rewardDistributed = ZERO_DECIMAL;
+	cycle.distributionStatus = 'WAITING_FOR_POSITIVE_REBASE';
+
+	if (event.params.index_.notEqual(BigInt.fromI32(0))) {
+		let lastCycle = RewardCycle.load(event.params.index_.minus(BigInt.fromI32(1)).toString());
+		if (lastCycle.distributionStatus == 'IN_PROGRESS') {
+			lastCycle.distributionStatus = 'ENDED_DUE_TO_NEGATIVE_REBASE';
+		}
+		lastCycle.save();
+	}
 
 	cycle.oracleLastPrices = [];
 	cycle.oracleNextUpdates = [];
@@ -118,6 +127,7 @@ export function handleLogNewCouponCycle(event: LogNewCouponCycle): void {
 
 	let setting = Setting.load('0');
 	setting.rewardCycleLength = event.params.index_.plus(BigInt.fromI32(1));
+	setting.lastRebase = 'NEGATIVE';
 
 	setting.save();
 	cycle.save();
@@ -140,7 +150,11 @@ export function handleLogOraclePriceAndPeriod(event: LogOraclePriceAndPeriod): v
 	cycle.save();
 }
 
-export function handleLogRewardClaimed(event: LogRewardClaimed): void {}
+export function handleLogRewardClaimed(event: LogRewardClaimed): void {
+	let cycle = RewardCycle.load(event.params.cycleIndex_.toString());
+	cycle.rewardDistributed = event.params.rewardClaimed_.divDecimal(DIVIDER_18_DECIMAL);
+	cycle.save();
+}
 
 export function handleLogRewardsAccrued(event: LogRewardsAccrued): void {
 	let expansionCycle = ExpansionCycle.load(event.params.index.toString());
@@ -183,6 +197,17 @@ export function handleLogRewardsAccrued(event: LogRewardsAccrued): void {
 	expansionCycle.deviation = deviation;
 	expansionCycle.peakScaler = peakScaler;
 
+	if (event.params.index.notEqual(BigInt.fromI32(0))) {
+		let rewardCycle = RewardCycle.load(event.params.index.minus(BigInt.fromI32(1)).toString());
+		if ((rewardCycle.distributionStatus = 'WAITING_FOR_POSITIVE_REBASE')) {
+			rewardCycle.distributionStatus = 'IN_PROGRESS';
+			rewardCycle.save();
+		}
+	}
+
+	setting.lastRebase = 'POSITIVE';
+
+	setting.save();
 	expansionCycle.save();
 }
 
@@ -193,8 +218,8 @@ export function handleNeutralRebase(event: LogNeutralRebase): void {
 	let id = contract.rewardCyclesLength().minus(BigInt.fromI32(1));
 	let cycle = RewardCycle.load(id.toString());
 
-	if (cycle != null) {
-		cycle.rewardDistributionDisabled = event.params.rewardDistributionDisabled_;
+	if (cycle != null && cycle.distributionStatus == 'IN_PROGRESS') {
+		cycle.distributionStatus = 'ENDED_DUE_TO_NEUTRAL_REBASE';
 		cycle.save();
 	}
 
@@ -282,8 +307,6 @@ export function handleLogStartNewDistributionCycle(event: LogStartNewDistributio
 
 	distributionCycle.exchangeRate = event.params.exchangeRate_.divDecimal(DIVIDER_18_DECIMAL);
 
-	distributionCycle.rewardDistributed = ZERO_DECIMAL;
-
 	distributionCycle.mean = setting.mean;
 	distributionCycle.deviation = setting.deviation;
 	distributionCycle.peakScaler = setting.peakScaler;
@@ -304,6 +327,10 @@ export function handleLogStartNewDistributionCycle(event: LogStartNewDistributio
 	rewardCycle.distributions = distributions;
 
 	rewardCycle.epochsRewarded = rewardCycle.epochsRewarded.plus(BigInt.fromI32(1));
+
+	if (rewardCycle.epochsRewarded.equals(rewardCycle.epochsToReward)) {
+		rewardCycle.distributionStatus = 'EPOCHS_COMPLETED';
+	}
 
 	rewardCycle.save();
 }

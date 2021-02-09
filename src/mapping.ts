@@ -15,7 +15,11 @@ import {
 	LogSetOracleBlockPeriod,
 	LogSetRewardBlockPeriod,
 	LogCouponsBought,
-	LogNeutralRebase
+	LogNeutralRebase,
+	LogSetMaximumRewardAccruedCap,
+	LogSetMinimumRewardAccruedCap,
+	LogSetEnableMaximumRewardAccruedCap,
+	LogSetEnableMinimumRewardAccruedCap
 } from '../generated/Contract/Contract';
 import { Setting, RewardCycle, ExpansionCycle, DistributionCycle, User } from '../generated/schema';
 
@@ -42,6 +46,11 @@ export function handleInitialize(call: InitializeCall): void {
 	setting.deviation = contract.bytes16ToUnit256(call.inputs.deviation_, DIVIDER_9_INT).divDecimal(DIVIDER_9_DECIMAL);
 
 	setting.rewardCycleLength = ZERO;
+
+	setting.enableMinimumRewardAccruedCap = contract.enableMinimumRewardAccruedCap();
+	setting.enableMaximumRewardAccruedCap = contract.enableMaximumRewardAccruedCap();
+	setting.minimumRewardAccruedCap = contract.minimumRewardAccruedCap().divDecimal(DIVIDER_18_DECIMAL);
+	setting.maximumRewardAccruedCap = contract.maximumRewardAccruedCap().divDecimal(DIVIDER_18_DECIMAL);
 
 	setting.oneDivDeviationSqrtTwoPi = contract
 		.bytes16ToUnit256(call.inputs.oneDivDeviationSqrtTwoPi_, DIVIDER_9_INT)
@@ -70,6 +79,7 @@ export function handleInitialize(call: InitializeCall): void {
 
 export function handleLogCouponBought(event: LogCouponsBought): void {
 	let contract = Contract.bind(event.address);
+
 	let id = contract.rewardCyclesLength().minus(BigInt.fromI32(1)).toString();
 	let cycle = RewardCycle.load(id);
 	let userId = event.params.buyer_.toHexString().concat('-').concat(id);
@@ -80,16 +90,18 @@ export function handleLogCouponBought(event: LogCouponsBought): void {
 		user.address = event.params.buyer_.toHexString();
 		user.rewardCycle = id;
 		user.couponBalance = event.params.amount_.divDecimal(DIVIDER_18_DECIMAL);
-		user.save();
+		user.couponsIssued = event.params.couponIssued_.divDecimal(DIVIDER_18_DECIMAL);
+		user.debaseEarned = ZERO_DECIMAL;
 
 		let users = cycle.users;
 		users.push(userId);
 		cycle.users = users;
 	} else {
 		user.couponBalance = user.couponBalance.plus(event.params.amount_.divDecimal(DIVIDER_18_DECIMAL));
-		user.save();
+		user.couponsIssued = user.couponsIssued.plus(event.params.amount_.divDecimal(DIVIDER_18_DECIMAL));
 	}
 	cycle.couponsIssued = cycle.couponsIssued.plus(event.params.amount_.divDecimal(DIVIDER_18_DECIMAL));
+	user.save();
 	cycle.save();
 }
 
@@ -151,8 +163,16 @@ export function handleLogOraclePriceAndPeriod(event: LogOraclePriceAndPeriod): v
 }
 
 export function handleLogRewardClaimed(event: LogRewardClaimed): void {
-	let cycle = RewardCycle.load(event.params.cycleIndex_.toString());
+	let id = event.params.cycleIndex_.toString();
+
+	let cycle = RewardCycle.load(id);
+	let userId = event.params.user_.toHexString().concat('-').concat(id);
+	let user = User.load(userId);
+
 	cycle.rewardDistributed = event.params.rewardClaimed_.divDecimal(DIVIDER_18_DECIMAL);
+	user.debaseEarned = user.debaseEarned.plus(event.params.rewardClaimed_.divDecimal(DIVIDER_18_DECIMAL));
+
+	user.save();
 	cycle.save();
 }
 
@@ -224,6 +244,27 @@ export function handleNeutralRebase(event: LogNeutralRebase): void {
 	}
 
 	setting.lastRebase = 'NEUTRAL';
+	setting.save();
+}
+
+export function handleLogSetMinimumRewardAccruedCap(event: LogSetMinimumRewardAccruedCap): void {
+	let setting = Setting.load('0');
+	setting.minimumRewardAccruedCap = event.params.minimumRewardAccruedCap_.divDecimal(DIVIDER_18_DECIMAL);
+	setting.save();
+}
+export function handleLogSetMaximumRewardAccruedCap(event: LogSetMaximumRewardAccruedCap): void {
+	let setting = Setting.load('0');
+	setting.maximumRewardAccruedCap = event.params.maximumRewardAccruedCap_.divDecimal(DIVIDER_18_DECIMAL);
+	setting.save();
+}
+export function handleLogSetEnableMinimumRewardAccruedCap(event: LogSetEnableMinimumRewardAccruedCap): void {
+	let setting = Setting.load('0');
+	setting.enableMinimumRewardAccruedCap = event.params.enableMinimumRewardAccruedCap_;
+	setting.save();
+}
+export function handleLogSetEnableMaximumRewardAccruedCap(event: LogSetEnableMaximumRewardAccruedCap): void {
+	let setting = Setting.load('0');
+	setting.enableMaximumRewardAccruedCap = event.params.enableMaximumRewardAccruedCap_;
 	setting.save();
 }
 

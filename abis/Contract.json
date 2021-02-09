@@ -13,6 +13,12 @@
 				"internalType": "uint256",
 				"name": "amount_",
 				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "couponIssued_",
+				"type": "uint256"
 			}
 		],
 		"name": "LogCouponsBought",
@@ -198,6 +204,32 @@
 		"inputs": [
 			{
 				"indexed": false,
+				"internalType": "bool",
+				"name": "enableMaximumRewardAccruedCap_",
+				"type": "bool"
+			}
+		],
+		"name": "LogSetEnableMaximumRewardAccruedCap",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "enableMinimumRewardAccruedCap_",
+				"type": "bool"
+			}
+		],
+		"name": "LogSetEnableMinimumRewardAccruedCap",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
 				"internalType": "uint256",
 				"name": "epochs_",
 				"type": "uint256"
@@ -217,6 +249,19 @@
 			}
 		],
 		"name": "LogSetInitialRewardShare",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "maximumRewardAccruedCap_",
+				"type": "uint256"
+			}
+		],
+		"name": "LogSetMaximumRewardAccruedCap",
 		"type": "event"
 	},
 	{
@@ -254,6 +299,19 @@
 			}
 		],
 		"name": "LogSetMeanAndDeviationWithFormulaConstants",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "minimumRewardAccruedCap_",
+				"type": "uint256"
+			}
+		],
+		"name": "LogSetMinimumRewardAccruedCap",
 		"type": "event"
 	},
 	{
@@ -539,6 +597,11 @@
 				"internalType": "uint256",
 				"name": "index",
 				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
 			}
 		],
 		"name": "earned",
@@ -557,6 +620,32 @@
 		"name": "emergencyWithdraw",
 		"outputs": [],
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "enableMaximumRewardAccruedCap",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "enableMinimumRewardAccruedCap",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -749,12 +838,38 @@
 	},
 	{
 		"inputs": [],
+		"name": "maximumRewardAccruedCap",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "mean",
 		"outputs": [
 			{
 				"internalType": "bytes16",
 				"name": "",
 				"type": "bytes16"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "minimumRewardAccruedCap",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -977,7 +1092,7 @@
 			},
 			{
 				"internalType": "uint256",
-				"name": "lastUpdateTime",
+				"name": "lastUpdateBlock",
 				"type": "uint256"
 			},
 			{
@@ -1036,6 +1151,32 @@
 	{
 		"inputs": [
 			{
+				"internalType": "bool",
+				"name": "enableMaximumRewardAccruedCap_",
+				"type": "bool"
+			}
+		],
+		"name": "setEnableMaximumRewardAccruedCap",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bool",
+				"name": "enableMinimumRewardAccruedCap_",
+				"type": "bool"
+			}
+		],
+		"name": "setEnableMinimumRewardAccruedCap",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"internalType": "uint256",
 				"name": "epochs_",
 				"type": "uint256"
@@ -1055,6 +1196,19 @@
 			}
 		],
 		"name": "setInitialRewardShare",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "maximumRewardAccruedCap_",
+				"type": "uint256"
+			}
+		],
+		"name": "setMaximumRewardAccruedCap",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -1088,6 +1242,19 @@
 			}
 		],
 		"name": "setMeanAndDeviationWithFormulaConstants",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "minimumRewardAccruedCap_",
+				"type": "uint256"
+			}
+		],
+		"name": "setMinimumRewardAccruedCap",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"

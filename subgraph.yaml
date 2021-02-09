@@ -29,10 +29,22 @@ dataSources:
         - LogTotalRewardClaimed
         - LogCouponsBought
         - LogNeutralRebase
+        - LogSetMinimumRewardAccruedCap
+        - LogSetMaximumRewardAccruedCap
+        - LogSetEnableMinimumRewardAccruedCap
+        - LogSetEnableMaximumRewardAccruedCap
       abis:
         - name: Contract
           file: ./abis/Contract.json
       eventHandlers:
+        - event: LogSetMinimumRewardAccruedCap(uint256)
+          handler: handleLogSetMinimumRewardAccruedCap
+        - event: LogSetMaximumRewardAccruedCap(uint256)
+          handler: handleLogSetMaximumRewardAccruedCap
+        - event: LogSetEnableMinimumRewardAccruedCap(bool)
+          handler: handleLogSetEnableMinimumRewardAccruedCap
+        - event: LogSetEnableMaximumRewardAccruedCap(bool)
+          handler: handleLogSetEnableMaximumRewardAccruedCap
         - event: LogNewCouponCycle(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)
           handler: handleLogNewCouponCycle
         - event: LogOraclePriceAndPeriod(uint256,uint256)
@@ -57,7 +69,7 @@ dataSources:
           handler: handleLogSetOracleBlockPeriod
         - event: LogStartNewDistributionCycle(uint256,uint256,uint256,uint256,bytes16)
           handler: handleLogStartNewDistributionCycle
-        - event: LogCouponsBought(address,uint256)
+        - event: LogCouponsBought(address,uint256,uint256)
           handler: handleLogCouponBought
         - event: LogNeutralRebase(bool)
           handler: handleNeutralRebase

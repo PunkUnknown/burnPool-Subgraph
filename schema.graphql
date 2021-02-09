@@ -21,6 +21,10 @@ type Setting @entity {
 	curveShifter: BigDecimal!
 	initialRewardShare: BigDecimal!
 	multiSigRewardShare: BigDecimal!
+	enableMinimumRewardAccruedCap: Boolean!
+	minimumRewardAccruedCap: BigDecimal!
+	enableMaximumRewardAccruedCap: Boolean!
+	maximumRewardAccruedCap: BigDecimal!
 	lastRebase: LastRebase!
 	mean: BigDecimal!
 	deviation: BigDecimal!
@@ -77,4 +81,6 @@ type User @entity {
 	address: String!
 	rewardCycle: RewardCycle!
 	couponBalance: BigDecimal!
+	couponsIssued: BigDecimal!
+	debaseEarned: BigDecimal!
 }

@@ -77,30 +77,33 @@ export function handleInitialize(call: InitializeCall): void {
 	setting.save();
 }
 
-export function handleLogCouponBought(event: LogCouponsBought): void {
+export function handleLogCouponsBought(event: LogCouponsBought): void {
 	let contract = Contract.bind(event.address);
 
 	let id = contract.rewardCyclesLength().minus(BigInt.fromI32(1)).toString();
 	let cycle = RewardCycle.load(id);
 	let userId = event.params.buyer_.toHexString().concat('-').concat(id);
 
+	let amount = event.params.amount_.divDecimal(DIVIDER_18_DECIMAL);
 	let user = User.load(userId);
+
 	if (user == null) {
 		user = new User(userId);
 		user.address = event.params.buyer_.toHexString();
 		user.rewardCycle = id;
-		user.couponBalance = event.params.amount_.divDecimal(DIVIDER_18_DECIMAL);
-		user.couponsIssued = event.params.couponIssued_.divDecimal(DIVIDER_18_DECIMAL);
 		user.debaseEarned = ZERO_DECIMAL;
+		user.couponBalance = ZERO_DECIMAL;
+		user.couponsIssued = ZERO_DECIMAL;
 
 		let users = cycle.users;
 		users.push(userId);
 		cycle.users = users;
-	} else {
-		user.couponBalance = user.couponBalance.plus(event.params.amount_.divDecimal(DIVIDER_18_DECIMAL));
-		user.couponsIssued = user.couponsIssued.plus(event.params.amount_.divDecimal(DIVIDER_18_DECIMAL));
 	}
-	cycle.couponsIssued = cycle.couponsIssued.plus(event.params.amount_.divDecimal(DIVIDER_18_DECIMAL));
+
+	user.couponBalance = user.couponBalance.plus(amount);
+	user.couponsIssued = cycle.couponsIssued.plus(amount);
+	cycle.couponsIssued = cycle.couponsIssued.plus(amount);
+
 	user.save();
 	cycle.save();
 }

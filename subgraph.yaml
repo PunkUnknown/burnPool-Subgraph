@@ -6,9 +6,9 @@ dataSources:
     name: Contract
     network: mainnet
     source:
-      address: "0xf4dbd5429F3bF1fBb107914B3C7937422Ae76168"
+      address: "0x8c9354C0def4a39D53Ac0730CEfe12d019439640"
       abi: Contract
-      startBlock: 11815660
+      startBlock: 11823300
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
